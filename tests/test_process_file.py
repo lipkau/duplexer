@@ -451,43 +451,53 @@ def test_process_pdf_file_output_permission_error(temp_dirs, monkeypatch):
     assert not output_pdf.exists()
 
 
-def test_process_pdf_file_archive_failure_scenario(temp_dirs):
+def test_process_pdf_file_archive_failure_scenario(temp_dirs, monkeypatch):
     """Test complete failure path: interleave succeeds but archiving fails.
 
     Scenario: PDF is valid and interleaves successfully, but archiving the
     original fails (e.g., due to filesystem issues or permission loss).
-    Expected: Output is created, but input is moved to failed directory,
-    and warning is logged about archive failure.
+    Expected: Output is created, but input stays in ingest (not moved to
+    archive or failed), and warning is logged about archive failure.
     """
     # Create valid input PDF
     input_pdf = temp_dirs["ingest"] / "test.pdf"
     create_test_pdf(input_pdf, ["F1", "B1"])
 
-    # Make archive directory read-only to simulate permission denied
-    archive_dir = temp_dirs["archive"]
-    archive_dir.chmod(0o444)
+    # Mock safe_move to fail on archiving attempt
+    call_count = [0]
+
+    def mock_safe_move(src, dst):
+        call_count[0] += 1
+        # First call (success path would be to archive)
+        # Return False to simulate archive failure
+        return False
+
+    monkeypatch.setattr("duplexer.cli.safe_move", mock_safe_move)
 
     # Capture logs to verify warning
     with _capture_logs() as logs:
         process_pdf_file(
             file_path=input_pdf,
             output_dir=temp_dirs["completed"],
-            archive_dir=archive_dir,
+            archive_dir=temp_dirs["archive"],
             failed_dir=temp_dirs["failed"],
             output_suffix=".duplex",
             reverse_backs=True,
             insert_blank_lastback=False,
         )
 
-    # Restore permissions for cleanup
-    archive_dir.chmod(0o755)
-
-    # Output should still exist (interleave succeeded)
+    # Output should exist (interleave succeeded)
     output_pdf = temp_dirs["completed"] / "test.duplex.pdf"
     assert output_pdf.exists()
 
-    # Input should still exist (archive failed)
+    # Input should still exist in ingest (archive failed, not moved)
     assert input_pdf.exists()
+
+    # Archive should be empty
+    assert not list(temp_dirs["archive"].glob("*.pdf"))
+
+    # Failed should be empty (archive failure doesn't move to failed)
+    assert not list(temp_dirs["failed"].glob("*.pdf"))
 
     # Verify warning was logged
     assert any("Failed to archive" in log for log in logs)
