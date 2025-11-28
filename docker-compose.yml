@@ -1,0 +1,20 @@
+services:
+  duplexer:
+    image: duplexer:latest
+    container_name: duplexer
+    restart: unless-stopped
+    volumes:
+      - ./dev/ingest:/ingest
+      - ./dev/completed:/completed
+    environment:
+      SCAN_GLOB: "*.pdf"
+      FILE_STABILITY_SECONDS: "5.0"
+      REQUIRE_READY_FILE: "false"
+
+      # Processing options
+      REVERSE_BACKS: "true"
+      INSERT_BLANK_LASTBACK: "false"
+      OUTPUT_SUFFIX: ".duplex"
+
+      # Logging
+      LOG_LEVEL: DEBUG

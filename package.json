@@ -1,0 +1,11 @@
+{
+  "name": "duplexer",
+  "version": "0.1.0",
+  "private": true,
+  "devDependencies": {
+    "markdownlint-cli2": "0.19.1"
+  },
+  "scripts": {
+    "lint:md": "markdownlint-cli2 \"**/*.md\" \"#node_modules\" \"#venv\" \"#.venv\""
+  }
+}
