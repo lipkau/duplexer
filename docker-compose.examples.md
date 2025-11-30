@@ -10,7 +10,7 @@ version: '3.8'
 
 services:
   duplexer:
-    image: duplexer:latest
+    image: ghcr.io/lipkau/duplexer:latest
     container_name: duplexer
     restart: unless-stopped
     volumes:
@@ -30,7 +30,7 @@ version: '3.8'
 
 services:
   duplexer:
-    image: duplexer:latest
+    image: ghcr.io/lipkau/duplexer:latest
     container_name: duplexer
     restart: unless-stopped
     volumes:
@@ -88,7 +88,7 @@ version: '3.8'
 
 services:
   duplexer:
-    image: duplexer:latest
+    image: ghcr.io/lipkau/duplexer:latest
     container_name: duplexer
     restart: unless-stopped
     volumes:

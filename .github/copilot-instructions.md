@@ -94,8 +94,8 @@ Images are automatically built and published to GitHub Container Registry (GHCR)
 
 **On release tag (e.g., `v1.0.0`):**
 
-- Tags: `latest`, `v1.0.0`, `1.0`
-- Available at: `ghcr.io/lipkau/duplexer:latest` or `v1.0.0`
+- Tags: `v1.0.0` (full version), `v1` (major), `latest` (stable)
+- Available at: `ghcr.io/lipkau/duplexer:latest`, `v1.0.0`, or `v1`
 
 Users can deploy with:
 
@@ -197,7 +197,7 @@ duplexer watch -v                  # Continuous with debug
 
 ## CI Tooling Summary
 
-GitHub Actions CI/CD pipeline with 4 jobs:
+GitHub Actions CI/CD pipeline with 5 jobs:
 
 1. **quality job** (single Python 3.14):
 
@@ -211,18 +211,29 @@ GitHub Actions CI/CD pipeline with 4 jobs:
    - Runs: `make test-ci` (fast unit/integration tests)
    - Python 3.14: Also runs `make test-performance` and uploads coverage to Codecov
 
-3. **docker job** (validation only):
+3. **build job** (Docker build validation):
 
    - Depends on: test job
-   - Builds Docker image with tag `duplexer:ci` (no push)
+   - Runs on: all pushes and PRs
+   - Builds image for validation only (no push)
    - Uses GitHub Actions cache for layer caching
 
-4. **publish job** (GHCR deployment):
-   - Depends on: docker job
-   - Only runs on `main` branch or release tags
-   - **On main**: Pushes `dev` tag
-   - **On tags (v\*)**: Pushes `latest`, `vX.X.X`, `X.X` tags
-   - Uses GitHub Container Registry (GHCR)
+4. **release-dev job** (publish dev tag):
+
+   - Depends on: build job
+   - Runs only on: main branch pushes
+   - Publishes `dev` tag to GHCR
+   - Uses cached layers from build job
+
+5. **release-official job** (publish release tags):
+
+   - Depends on: build job
+   - Runs only on: semantic version tags (v*.*.*)
+   - Publishes tags to GHCR:
+     - `vX.X.X`: full version (e.g., v1.0.0 → 1.0.0)
+     - `vX`: major version (e.g., v1.0.0 → v1)
+     - `latest`: only on release tags
+   - Uses cached layers from build job
 
 **Tooling:**
 
