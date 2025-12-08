@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "devDependencies": {
-    "markdownlint-cli2": "0.19.1"
+    "markdownlint-cli2": "0.20.0"
   },
   "scripts": {
     "lint:md": "markdownlint-cli2 \"**/*.md\" \"#node_modules\" \"#venv\" \"#.venv\""
