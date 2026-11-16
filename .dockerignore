@@ -29,7 +29,7 @@ dev/
 .git/
 .github/
 .gitignore
-.markdownlint.json
+biome.json
 
 # Documentation
 README.md
