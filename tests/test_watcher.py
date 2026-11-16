@@ -7,7 +7,7 @@ from threading import Thread
 
 from conftest import create_test_pdf
 from duplexer.io_utils import is_file_stable
-from duplexer.watcher import FileWatcher
+from duplexer.watcher import FileWatcher, ProcessingHandler
 
 
 def test_file_stability_check(tmp_path):
@@ -513,3 +513,59 @@ def test_watcher_stability_check_uses_configured_seconds(temp_dirs, tmp_path):
     assert elapsed >= stability_time - 0.2, (
         f"Processing happened too early: {elapsed:.2f}s < {stability_time}s"
     )
+
+
+def test_watcher_processes_pdf_when_ready_file_arrives_later(temp_dirs, tmp_path):
+    """Test that a .ready file created after its PDF's check still gets the PDF processed."""
+    source_pdf = tmp_path / "source.pdf"
+    create_test_pdf(source_pdf, ["F1", "B1"])
+
+    processed = []
+
+    def callback(path: Path):
+        processed.append(path.name)
+
+    watcher = FileWatcher(
+        input_dir=temp_dirs["ingest"],
+        process_callback=callback,
+        pattern="*.pdf",
+        stability_seconds=0.3,
+        require_ready_file=True,
+    )
+
+    watcher_thread = Thread(target=watcher.watch, daemon=True)
+    watcher_thread.start()
+    time.sleep(0.3)
+
+    shutil.copy(source_pdf, temp_dirs["ingest"] / "scan.pdf")
+    time.sleep(0.8)  # The PDF's check runs and finds no .ready file
+    assert processed == []
+
+    (temp_dirs["ingest"] / "scan.pdf.ready").touch()
+    time.sleep(0.8)
+
+    watcher.stop()
+    time.sleep(0.2)
+
+    assert processed == ["scan.pdf"]
+
+
+def test_handler_checks_again_when_file_is_not_stable_yet(tmp_path):
+    """Test that a check finding a recently changed file schedules another check."""
+    test_pdf = tmp_path / "test.pdf"
+    create_test_pdf(test_pdf, ["F1", "B1"])
+
+    processed = []
+    handler = ProcessingHandler(
+        pattern="*.pdf",
+        process_callback=lambda path: processed.append(path.name),
+        require_ready_file=False,
+        stability_seconds=0.3,
+    )
+
+    # Called right after the write, as if no event had reset the timer since
+    handler._check_file_ready(test_pdf)
+    assert processed == []
+
+    time.sleep(0.8)
+    assert processed == ["test.pdf"]
