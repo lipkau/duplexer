@@ -55,11 +55,13 @@ docker run -d \
 
 **Available tags:**
 
-- `latest` — Stable release (semver tags only)
-- `dev` — Development build from main
-- `vX.X.X` — Specific versions (e.g., `v1.0.0`)
-- `vX` — Major versions (e.g., `v1`)
-- `pr-N` — Build of pull request N, deleted when the pull request closes
+- `latest` — the newest release
+- `1.2.3`, `1.2`, `1`, `v1.2.3` — releases
+- `main` — the newest build of `main`
+- `sha-<commit>` — any build, by commit
+- the branch name (`fix/x` → `fix-x`) — a pull request's build, deleted when the pull request closes
+
+Images built before the switch to the shared image action also carry `dev` (builds of `main`), `v1` and `pr-N`. Those tags no longer move.
 
 For Docker Compose examples (including paperless-ngx integration), see [`docker-compose.examples.md`](docker-compose.examples.md).
 
