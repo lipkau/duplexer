@@ -1,4 +1,5 @@
-FROM python:3.15-slim
+# Stage 1: Runtime image (the only published image)
+FROM python:3.15-alpine AS runtime
 
 # OCI image labels
 LABEL org.opencontainers.image.title="Duplexer" \
@@ -25,11 +26,14 @@ COPY pyproject.toml ./
 # Copy application source code
 COPY src/ ./src/
 
-# Install package (non-editable for production)
-RUN pip install --no-cache-dir --disable-pip-version-check --no-compile .
+# Install package (non-editable for production). pip is only needed for this step, so
+# remove it afterwards to keep pip and the packages it vendors out of the image.
+RUN pip install --no-cache-dir --disable-pip-version-check --no-compile . \
+  && pip uninstall -y pip
 
 # Create non-root user and volume mount points
-RUN useradd -u 1000 -r -s /usr/sbin/nologin appuser && \
+RUN addgroup -S -g 1000 appuser && \
+  adduser -S -D -H -u 1000 -G appuser -s /sbin/nologin appuser && \
   mkdir -p /ingest /completed && \
   chown -R appuser:appuser /ingest /completed /app
 
@@ -52,3 +56,20 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
 # Run watcher by default
 ENTRYPOINT ["python", "-m", "duplexer"]
 CMD ["watch"]
+
+# Stage 2: Testing image for CI (never published)
+FROM runtime AS testing
+
+USER root
+
+# The runtime stage has no pip, so bootstrap it from the standard library. Some dev tools
+# (PyYAML, via pre-commit) have no wheels for this Python yet and need a compiler.
+RUN apk add --no-cache build-base
+COPY . ./
+RUN python -m ensurepip \
+  && python -m pip install --no-cache-dir .[dev]
+
+RUN python -m pytest -m "not slow"
+
+# Default to runtime stage
+FROM runtime
