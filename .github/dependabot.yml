@@ -1,5 +1,6 @@
 version: 2
 updates:
+  # Python dependencies
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
@@ -7,7 +8,32 @@ updates:
       day: "monday"
       time: "06:00"
     open-pull-requests-limit: 10
+    assignees:
+      - "lipkau"
+    commit-message:
+      prefix: "deps"
+      prefix-development: "deps-dev"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "python"
+    ignore:
+      # watchdog 7 breaks processing of files that are still being written; see pyproject.toml
+      - dependency-name: "watchdog"
+        update-types: ["version-update:semver-major"]
+    groups:
+      python-patch:
+        patterns:
+          - "*"
+        update-types:
+          - "patch"
+      python-minor:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
 
+  # Docker dependencies
   - package-ecosystem: "docker"
     directory: "/"
     schedule:
@@ -15,7 +41,16 @@ updates:
       day: "monday"
       time: "06:00"
     open-pull-requests-limit: 5
+    assignees:
+      - "lipkau"
+    commit-message:
+      prefix: "docker"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "docker"
 
+  # GitHub Actions dependencies
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
@@ -23,7 +58,20 @@ updates:
       day: "monday"
       time: "06:00"
     open-pull-requests-limit: 5
+    assignees:
+      - "lipkau"
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
 
+  # NPM dependencies for markdownlint
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
@@ -31,3 +79,22 @@ updates:
       day: "monday"
       time: "06:00"
     open-pull-requests-limit: 5
+    assignees:
+      - "lipkau"
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "npm"
+    groups:
+      npm-patch:
+        patterns:
+          - "*"
+        update-types:
+          - "patch"
+      npm-minor:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
