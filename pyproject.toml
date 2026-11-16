@@ -26,6 +26,7 @@ classifiers = [
 dependencies = [
     "pypdf>=6.10.0,<7.0.0",
     "click>=8.3.0,<9.0.0",
+    # watchdog 7 stops processing files that are still being written (see the watcher tests)
     "watchdog>=6.0.0,<7.0.0",
 ]
 

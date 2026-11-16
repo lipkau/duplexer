@@ -1,13 +1,13 @@
 # Duplexer
 
-[![CI](https://github.com/lipkau/duplexer/actions/workflows/validate-and-publish.yml/badge.svg)][ci]
+[![CI](https://github.com/lipkau/duplexer/actions/workflows/ci.yml/badge.svg)][ci]
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)][license]
 [![GitHub Release](https://img.shields.io/github/v/release/lipkau/duplexer)][release]
 [![Container Image](https://img.shields.io/badge/container-ghcr.io-blue)][container]
 [![Works with paperless-ngx](https://img.shields.io/badge/works%20with-paperless--ngx-blue)][paperless]
 
 [ci]:
-  https://github.com/lipkau/duplexer/actions/workflows/validate-and-publish.yml
+  https://github.com/lipkau/duplexer/actions/workflows/ci.yml
 [license]: https://opensource.org/licenses/MIT
 [release]: https://github.com/lipkau/duplexer/releases
 [container]: https://github.com/lipkau/duplexer/pkgs/container/duplexer
@@ -60,6 +60,7 @@ docker run -d \
 - `dev` — Development build from main
 - `vX.X.X` — Specific versions (e.g., `v1.0.0`)
 - `vX` — Major versions (e.g., `v1`)
+- `pr-N` — Build of pull request N, deleted when the pull request closes
 
 For Docker Compose examples (including paperless-ngx integration), see [`docker-compose.examples.md`](docker-compose.examples.md).
 

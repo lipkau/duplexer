@@ -77,7 +77,7 @@ processing PDFs by splitting them into front and back pages, then interleaving t
 ## Docker Best Practices
 
 - Run as non-root user (uid 1000)
-- Minimal base image (python:3.14-slim)
+- Minimal base image (python:3.15-alpine), with pip removed after the install
 - Layer caching - copy pyproject.toml before code
 - No pip cache in final image
 - Health checks for container orchestration
@@ -92,10 +92,14 @@ Images are automatically built and published to GitHub Container Registry (GHCR)
 - Tag: `dev` — Latest development build
 - Available at: `ghcr.io/lipkau/duplexer:dev`
 
-**On release tag (e.g., `v1.0.0`):**
+**On release tag (e.g., `v1.0.0`) on `main`:**
 
-- Tags: `v1.0.0` (full version), `v1` (major), `latest` (stable)
+- Tags: `v1.0.0` (full version), `v1` (major), `latest` (stable), and `dev`
 - Available at: `ghcr.io/lipkau/duplexer:latest`, `v1.0.0`, or `v1`
+
+**On pull requests:**
+
+- Tag: `pr-N`, rebuilt on every push and deleted when the pull request closes
 
 Users can deploy with:
 
@@ -197,43 +201,31 @@ duplexer watch -v                  # Continuous with debug
 
 ## CI Tooling Summary
 
-GitHub Actions CI/CD pipeline with 5 jobs:
+The pipeline matches mealie_translate: CI checks every change, and CD publishes images after
+CI succeeds.
 
-1. **quality job** (single Python 3.14):
+**`ci.yml` (Continuous Integration)** runs on pull requests, pushes to `main`, release tags
+(`v*.*.*`), and manually (Actions → Continuous Integration → Run workflow):
 
-   - Runs: `make fmt-check`, `make lint`, `make lint-md`
-   - Catches formatting and code quality issues early
-   - Fails fast before testing
+1. **quality** (Python 3.14): `make fmt-check`, `make lint`, `make lint-md`
+2. **test** (matrix: Python 3.12, 3.13, 3.14; needs quality): `make test-ci`; on 3.14 also
+   `make test-performance` and the Codecov upload
+3. **docker-test** (needs quality): `docker build --target testing .`, which runs the fast tests
+   inside the Alpine image
 
-2. **test job** (matrix: Python 3.12, 3.13, 3.14):
+**`cd.yml` (Continuous Deployment)** runs when CI completes successfully and pushes the image
+through the reusable **`_docker-build.yml`** (linux/amd64 and linux/arm64, with provenance and
+SBOM):
 
-   - Depends on: quality job
-   - Runs: `make test-ci` (fast unit/integration tests)
-   - Python 3.14: Also runs `make test-performance` and uploads coverage to Codecov
+- pull request → `pr-N`, and a comment on the pull request with the pull command
+- push to `main` → `dev`
+- release tag on `main` → `vX.Y.Z`, `vX`, `latest` and `dev`
 
-3. **build job** (Docker build validation):
+To rebuild an image, for example after a base image fix, run CI manually on `main` (rebuilds
+`dev`) or on a release tag (rebuilds that release and `latest`).
 
-   - Depends on: test job
-   - Runs on: all pushes and PRs
-   - Builds image for validation only (no push)
-   - Uses GitHub Actions cache for layer caching
-
-4. **release-dev job** (publish dev tag):
-
-   - Depends on: build job
-   - Runs only on: main branch pushes
-   - Publishes `dev` tag to GHCR
-   - Uses cached layers from build job
-
-5. **release-official job** (publish release tags):
-
-   - Depends on: build job
-   - Runs only on: semantic version tags (v*.*.*)
-   - Publishes tags to GHCR:
-     - `vX.X.X`: full version (e.g., v1.0.0 → 1.0.0)
-     - `vX`: major version (e.g., v1.0.0 → v1)
-     - `latest`: only on release tags
-   - Uses cached layers from build job
+**`pr-image-cleanup.yml`** deletes the `pr-N` image when the pull request closes, and
+**`maintenance.yml`** deletes old `dev` and `pr-*` images on a schedule.
 
 **Tooling:**
 
