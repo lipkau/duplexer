@@ -22,14 +22,15 @@ repos:
     hooks:
       - id: pyright
 
-  - repo: https://github.com/igorshubovych/markdownlint-cli
-    rev: v0.45.0
-    hooks:
-      - id: markdownlint
-        args: ["--config", ".markdownlint.json"]
-
   - repo: local
     hooks:
+      - id: biome-markdown
+        name: Biome (Markdown)
+        entry: npm run lint:md
+        language: system
+        pass_filenames: false
+        types: [markdown]
+
       - id: pytest-unit
         name: pytest-unit
         entry: make pre-commit-test

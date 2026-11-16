@@ -6,7 +6,7 @@ This directory contains example Docker Compose configurations for different use 
 
 ```yaml
 # docker-compose.yml
-version: '3.8'
+version: "3.8"
 
 services:
   duplexer:
@@ -26,7 +26,7 @@ services:
 
 ```yaml
 # docker-compose.paperless.yml
-version: '3.8'
+version: "3.8"
 
 services:
   duplexer:
@@ -37,7 +37,7 @@ services:
       - ./scans:/ingest
       - paperless-consume:/completed
     environment:
-      OUTPUT_SUFFIX: ""  # No suffix for paperless
+      OUTPUT_SUFFIX: "" # No suffix for paperless
       LOG_LEVEL: INFO
     depends_on:
       - paperless
@@ -84,7 +84,7 @@ volumes:
 
 ```yaml
 # docker-compose.advanced.yml
-version: '3.8'
+version: "3.8"
 
 services:
   duplexer:

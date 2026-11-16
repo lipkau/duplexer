@@ -4,10 +4,10 @@ help:
 	@echo "Available targets:"
 	@echo "  venv              - Create virtual environment"
 	@echo "  install           - Install package with dev dependencies"
-	@echo "  fmt               - Format code with ruff"
+	@echo "  fmt               - Format code with ruff and Markdown with Biome"
 	@echo "  fmt-check         - Check code formatting without changes"
 	@echo "  lint              - Run ruff and pyright"
-	@echo "  lint-md           - Lint markdown files"
+	@echo "  lint-md           - Lint and format-check Markdown with Biome"
 	@echo "  test              - Run pytest (fast tests only)"
 	@echo "  test-ci           - Run tests with coverage for CI"
 	@echo "  test-performance  - Run performance tests"
@@ -28,6 +28,7 @@ install:
 fmt:
 	ruff format src tests
 	ruff check --fix src tests
+	npm run fmt:md
 
 fmt-check:
 	ruff format --check src tests
@@ -37,7 +38,7 @@ lint:
 	pyright
 
 lint-md:
-	npx markdownlint-cli2 "**/*.md" "#node_modules" "#venv" "#.venv"
+	npm run lint:md
 
 test:
 	pytest -q
