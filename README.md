@@ -6,8 +6,7 @@
 [![Container Image](https://img.shields.io/badge/container-ghcr.io-blue)][container]
 [![Works with paperless-ngx](https://img.shields.io/badge/works%20with-paperless--ngx-blue)][paperless]
 
-[ci]:
-  https://github.com/lipkau/duplexer/actions/workflows/ci.yml
+[ci]: https://github.com/lipkau/duplexer/actions/workflows/ci.yml
 [license]: https://opensource.org/licenses/MIT
 [release]: https://github.com/lipkau/duplexer/releases
 [container]: https://github.com/lipkau/duplexer/pkgs/container/duplexer
