@@ -75,13 +75,27 @@ class ProcessingHandler(FileSystemEventHandler):
         logger.debug(f"File modified event: {file_path}")
         self._mark_pending(file_path)
 
+    def on_attrib(self, event: FileSystemEvent) -> None:
+        """Handle metadata changes, such as a new modification time.
+
+        watchdog 7 reports these separately from content changes; watchdog 6 reported them as
+        modifications.
+        """
+        if event.is_directory:
+            return
+
+        file_path = Path(str(event.src_path))  # Ensure string conversion from bytes
+        logger.debug(f"File attribute event: {file_path}")
+        self._mark_pending(file_path)
+
     def _mark_pending(self, file_path: Path) -> None:
         """Mark a file as pending for stability check."""
+        if file_path.name.endswith(".ready"):
+            # A sidecar file signals that its PDF is complete: check the PDF.
+            file_path = file_path.with_name(file_path.name.removesuffix(".ready"))
         if not file_path.match(self.pattern):
             return
         if file_path in self.processed_files:
-            return
-        if file_path.name.endswith(".ready"):
             return
 
         with self.pending_lock:
@@ -114,12 +128,19 @@ class ProcessingHandler(FileSystemEventHandler):
             if file_path in self.processed_files:
                 return
 
-            # Check if file is ready
-            if is_file_ready(file_path, self.require_ready_file, self.stability_seconds):
+            ready = is_file_ready(file_path, self.require_ready_file, self.stability_seconds)
+            if ready:
                 self.processed_files.add(file_path)
+
+        if not ready:
+            # In ready-file mode, the .ready file's own event triggers the next check. Otherwise
+            # the file changed without an event reaching us: check again after another interval.
+            if not self.require_ready_file and file_path.exists():
+                logger.debug(f"{file_path.name} not stable yet, checking again later")
+                self._mark_pending(file_path)
             else:
                 logger.debug(f"{file_path.name} not ready yet, skipping")
-                return
+            return
 
         # Process outside the lock
         try:
